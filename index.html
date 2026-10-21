@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10152b" />
+    <meta
+      name="description"
+      content="SilentAlert converts supported environmental sound detections into visual alerts."
+    />
+
+    <title>SilentAlert | Sound Awareness</title>
+
+    <!-- Website styling -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- AI audio classification library -->
+
+    <script type="module">
+      import {
+        AudioClassifier,
+        FilesetResolver,
+      } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio/+esm";
+
+      window.AudioClassifier = AudioClassifier;
+      window.FilesetResolver = FilesetResolver;
+    </script>
+
+    <script src="app.js" defer></script>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="SilentAlert home">
+        <span class="brand-icon">◉</span>
+        <span>Silent<span class="accent">Alert</span></span>
+      </a>
+
+      <span class="privacy-label">● Privacy first</span>
+    </header>
+
+    <main class="container">
+      <!-- Welcome section -->
+      <section class="welcome">
+        <div>
+          <p class="eyebrow">ACCESSIBILITY COMPANION</p>
+          <h1>Hear with your eyes.</h1>
+          <p class="muted">Important sounds, made visible.</p>
+        </div>
+
+        <div id="statusBadge" class="status-badge" role="status">
+          <span class="status-dot"></span>
+          <span id="statusText">Not listening</span>
+        </div>
+      </section>
+
+      <!-- Sound monitoring -->
+      <section class="monitor panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SOUND MONITOR</p>
+            <h2>Your environment</h2>
+          </div>
+
+          <span class="monitor-icon" aria-hidden="true">⌁</span>
+        </div>
+
+        <div class="sound-visual" id="soundVisual" aria-hidden="true">
+          <span></span><span></span><span></span><span></span> <span></span
+          ><span></span><span></span><span></span> <span></span><span></span
+          ><span></span><span></span> <span></span><span></span><span></span
+          ><span></span> <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span> <span></span
+          ><span></span><span></span><span></span> <span></span><span></span
+          ><span></span><span></span>
+        </div>
+
+        <p id="monitorMessage" class="muted center" aria-live="polite">
+          Start monitoring to measure microphone activity.
+        </p>
+
+        <!-- AI model status -->
+        <p id="aiStatus" class="tiny muted center" role="status">
+          AI model not loaded yet.
+        </p>
+
+        <!-- Latest AI prediction -->
+        <p id="predictionText" class="center" aria-live="polite">
+          Waiting for a sound prediction.
+        </p>
+
+        <!-- Microphone level meter -->
+        <div
+          class="level-track"
+          role="progressbar"
+          aria-label="Microphone audio level"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          id="levelTrack"
+        >
+          <div id="levelBar" class="level-bar"></div>
+        </div>
+
+        <p class="tiny muted center" id="levelText">Input level: 0%</p>
+
+        <!-- Listening controls -->
+        <div class="actions">
+          <button id="startBtn" class="button primary">
+            ▶ Start listening
+          </button>
+
+          <button id="stopBtn" class="button secondary" disabled>■ Stop</button>
+        </div>
+
+        <p class="tiny muted center">
+          Microphone access requires your permission.
+        </p>
+      </section>
+
+      <!-- Alert notification -->
+      <section
+        id="alertPanel"
+        class="alert-panel"
+        hidden
+        role="alert"
+        aria-live="assertive"
+      >
+        <div class="alert-symbol">!</div>
+
+        <div>
+          <p class="eyebrow">SOUND NOTIFICATION</p>
+          <h2 id="alertTitle">Sound alert</h2>
+          <p id="alertDescription">Notification details will appear here.</p>
+        </div>
+
+        <button id="dismissBtn" class="icon-button" aria-label="Dismiss alert">
+          ✕
+        </button>
+      </section>
+
+      <!-- User sound preferences -->
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PERSONALIZE</p>
+            <h2>Sounds that matter</h2>
+          </div>
+        </div>
+
+        <div class="sound-grid">
+          <label class="sound-card">
+            <span class="sound-emoji">🔔</span>
+            <span class="sound-info">
+              <strong>Doorbell</strong>
+              <small>Visitors</small>
+            </span>
+            <input type="checkbox" name="sound" value="doorbell" checked />
+          </label>
+
+          <label class="sound-card">
+            <span class="sound-emoji">🚪</span>
+            <span class="sound-info">
+              <strong>Knocking</strong>
+              <small>At the door</small>
+            </span>
+            <input type="checkbox" name="sound" value="knocking" checked />
+          </label>
+
+          <label class="sound-card">
+            <span class="sound-emoji">🐕</span>
+            <span class="sound-info">
+              <strong>Dog barking</strong>
+              <small>Nearby activity</small>
+            </span>
+            <input type="checkbox" name="sound" value="barking" checked />
+          </label>
+
+          <label class="sound-card">
+            <span class="sound-emoji">🚨</span>
+            <span class="sound-info">
+              <strong>Siren</strong>
+              <small>Urgent sound</small>
+            </span>
+            <input type="checkbox" name="sound" value="siren" checked />
+          </label>
+        </div>
+
+        <p class="tiny muted">
+          Preferences are saved locally. Actual detection depends on the AI
+          model's supported sound classes.
+        </p>
+      </section>
+
+      <!-- Event history -->
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR ACTIVITY</p>
+            <h2>Recent events</h2>
+          </div>
+
+          <button id="clearBtn" class="text-button">Clear history</button>
+        </div>
+
+        <div id="historyList" class="history-list" aria-live="polite"></div>
+      </section>
+
+      <!-- Demonstration controls -->
+      <section class="demo-box panel">
+        <div>
+          <p class="eyebrow">PRESENTATION MODE</p>
+          <h2>Try a sample alert</h2>
+          <p class="muted">
+            Preview the alert interface without relying on AI detection.
+          </p>
+        </div>
+
+        <div class="demo-actions">
+          <button class="button secondary demo-btn" data-sound="doorbell">
+            🔔 Doorbell
+          </button>
+
+          <button class="button secondary demo-btn" data-sound="knocking">
+            🚪 Knocking
+          </button>
+
+          <button class="button secondary demo-btn" data-sound="barking">
+            🐕 Barking
+          </button>
+
+          <button class="button secondary demo-btn" data-sound="siren">
+            🚨 Siren
+          </button>
+        </div>
+
+        <p class="tiny muted">
+          Demo events are simulated, not real AI detections.
+        </p>
+      </section>
+
+      <footer>
+        SilentAlert · Innotech Project · Prototype v1.0
+        <p>Not a replacement for certified emergency-warning devices.</p>
+      </footer>
+    </main>
+  </body>
+</html>
